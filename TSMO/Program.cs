@@ -1,6 +1,6 @@
 ﻿using TSMO;
 
-ModelCharacteristics modelCharacteristics = ModelCharacteristics.SetModel
+ModelCharacteristics modelCharacteristics = ModelCharacteristics.GetModel
 (
     g: 2,
     a: 30,
@@ -12,4 +12,6 @@ ModelCharacteristics modelCharacteristics = ModelCharacteristics.SetModel
 
 Console.WriteLine($"eta = {modelCharacteristics.eta}");
 Console.WriteLine($"lambda = {modelCharacteristics.lambda}");
+Console.WriteLine($"mu = {modelCharacteristics.mu}");
+Console.WriteLine($"muOut = {modelCharacteristics.muOut}");
 
