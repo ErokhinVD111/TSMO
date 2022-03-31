@@ -6,17 +6,18 @@ using System.Threading.Tasks;
 
 namespace TSMO
 {
+    public enum N 
+    {
+        n1 = 2, n2, n3
+    }
     internal class ModelCharacteristics
     {
 
         #region Characteristics
 
-        public enum N
-        {
-            n1 = 2, n2, n3
-        }
-
         public readonly double _g;
+
+        public readonly int _l;
 
         public readonly double _muMid;
 
@@ -44,7 +45,7 @@ namespace TSMO
 
         public double countRequest;
 
-        public readonly double _tLoadedChannel;
+        //public readonly double _tLoadedChannel;
 
         public N n;
 
@@ -62,7 +63,7 @@ namespace TSMO
 
         private static ModelCharacteristics modelInstance = null;
 
-        private ModelCharacteristics(double g, double muMid, double p, double v, double I, double a)
+        private ModelCharacteristics(double g, double muMid, double p, double v, double I, double a, int l)
         {
             n = N.n1;
             _g = g;
@@ -71,18 +72,19 @@ namespace TSMO
             _v = v;
             _I = I;
             _a = a;
+            _l = l;
             lambda = v / I;
             eta = v / a;
             mu = g * muMid * p;
             muOut = mu + eta;
-            _tLoadedChannel = 1 / muOut;
+            //_tLoadedChannel = 1 / muOut;
         }
 
-        public static ModelCharacteristics GetModel(double g, double muMid, double p, double v, double I, double a)
+        public static ModelCharacteristics GetModel(double g, double muMid, double p, double v, double I, double a, int l)
         {
             if(modelInstance == null)
             {
-                modelInstance = new ModelCharacteristics(g, muMid, p, v, I, a);
+                modelInstance = new ModelCharacteristics(g, muMid, p, v, I, a, l);
             }
             return modelInstance;
         }
