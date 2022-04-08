@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TSMO
 {
-    public enum N 
+    public enum N : int
     {
         n1 = 2, n2, n3
     }
@@ -15,31 +15,27 @@ namespace TSMO
 
         #region Characteristics
 
-        public readonly double _g;
+        public readonly double _g; //Количество пусковых установок
 
-        public readonly int _l;
+        public readonly int _l; //Количество взаимопомогающих каналов
 
-        public readonly double _muMid;
+        public readonly double _muMid; //Скорострельность каждой пусковой установки
 
-        public readonly double _p;
+        public readonly double _p; //Вероятность поражения цели одной установкой
 
-        public readonly double _v;
+        public readonly double _v; //Скорость движения ракеты противника
 
-        public readonly double _I;
+        public readonly double _I; //Средний линейный интервал между ракетами
 
-        public readonly double _a;
+        public readonly double _a; //Зона обстрела
 
         public readonly double lambda;
 
-        public readonly double eta;
-
         public readonly double mu;
 
-        public readonly double muOut;
+        public double k; // Среднее число занятных каналов
 
-        public double countBusyChannel; // (lambda * countRequestServices) / (muOut * countRequest)
-
-        public double pServices; // countRequestServices / countRequest
+        public double p_obs; 
 
         public int countRequestServices;
 
@@ -53,11 +49,11 @@ namespace TSMO
 
         #region RequiredCharacteristics
 
-        public double PLoadedChannel { get; set; } // countBusyChannel / n
+        public double PLoadedChannel { get; set; } // Вероятность загруженности канала
 
-        public double LambdaZero { get; set; }  // pServices * lambda
+        public double LambdaZero { get; set; }  // Плотность потока обслуженных заявок
 
-        public double TEmptyChannel { get; set; } // 
+        public double TEmptyChannel { get; set; } // Среднее время простоя канала
 
         #endregion
 
@@ -73,11 +69,8 @@ namespace TSMO
             _I = I;
             _a = a;
             _l = l;
-            lambda = v / I;
-            eta = v / a;
+            lambda = (v / I) / 60;
             mu = g * muMid * p;
-            muOut = mu + eta;
-            //_tLoadedChannel = 1 / muOut;
         }
 
         public static ModelCharacteristics GetModel(double g, double muMid, double p, double v, double I, double a, int l)

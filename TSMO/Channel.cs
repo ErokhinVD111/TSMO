@@ -14,6 +14,14 @@ namespace TSMO
 
         public int requestComplete;
 
-        public double timeBusy;
+        /// <summary>
+        /// Время обслуживания заявки
+        /// </summary>
+        public List<double> timeBusy = new();
+
+        /// <summary>
+        /// Время, когда заявка пришла и стала обслуживаться каналом
+        /// </summary>
+        public List<double> timeCommingRequest = new();
     }
 }
