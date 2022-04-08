@@ -14,6 +14,8 @@ namespace TSMO
 
         public int requestComplete;
 
+        public int IndexRequest;
+
         /// <summary>
         /// Время обслуживания заявки
         /// </summary>
