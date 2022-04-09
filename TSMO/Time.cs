@@ -65,7 +65,7 @@ namespace TSMO
         public double CalculateTService(int countChannel)
         {
             double tService = 0;
-            for(int i = 0; i < countChannel; i++)
+            for (int i = 0; i < countChannel; i++)
                 tService += (-100 / (_l * _mu)) * Math.Log(random.NextDouble());
             return tService;
         }

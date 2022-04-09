@@ -29,12 +29,6 @@ namespace TSMO
         public List<Channel> Channels;
 
 
-        /// <summary>
-        /// Cчетчик свободных каналов
-        /// </summary>
-        public int FreeChannel;
-
-
         private static ServiceSystem systemInstance;
 
 
@@ -43,7 +37,6 @@ namespace TSMO
             CountChannels = (int)n;
             CountParalelChannels = paralelChannels;
             Channels = new(CountChannels);
-            FreeChannel = CountChannels;
         }
 
         public static ServiceSystem GetServiceSystem(N n, int paralelChannels)
