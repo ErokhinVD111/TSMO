@@ -18,12 +18,12 @@ namespace TSMO
         /// <summary>
         /// Время обслуживания заявки
         /// </summary>
-        public List<double> timeBusy = new();
+        public List<double> timeBusyChannel = new();
 
         /// <summary>
         /// Время, когда заявка пришла и стала обслуживаться каналом
         /// </summary>
-        public List<double> timeCommingRequest = new();
+        public List<double> timeComingRequest = new();
 
        
     }

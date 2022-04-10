@@ -105,8 +105,8 @@ namespace TSMO
                 {
                     channel.IsActive = true;
                     channel.IndexRequest = indexRequest;
-                    channel.timeCommingRequest.Add(timeComingRequest);
-                    channel.timeBusy.Add(timeBusyChannel);
+                    channel.timeComingRequest.Add(timeComingRequest);
+                    channel.timeBusyChannel.Add(timeBusyChannel);
 
                 });
 
@@ -142,6 +142,31 @@ namespace TSMO
             {
                 return 0;
             }
+        }
+
+        /// <summary>
+        /// Метод для освобождения каналов 
+        /// </summary>
+        /// <param name="timeComingRequest"></param>
+        public void FreeChannels(double timeComingRequest)
+        {
+            //Освобождаем каналы, у которых вышло время обслуживания
+            Channels.Where(channel => channel.IsActive).ToList().
+                Where(channel => timeComingRequest >= channel.timeComingRequest.Last() + channel.timeBusyChannel.Last()).
+                ToList().ForEach(i => i.IsActive = false);
+            
+            //Делаем перераспределение при условии, что оно нужно
+            StartSupport(timeComingRequest);
+            
+        }
+
+
+        /// <summary>
+        /// Метод для перераспределения каналов (оказания взаимопомощи)
+        /// </summary>
+        public void StartSupport(double timeComingRequest)
+        {
+
         }
 
     }

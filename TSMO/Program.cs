@@ -11,7 +11,7 @@ ModelCharacteristics modelCharacteristics = ModelCharacteristics.GetModel
     muMid: 0.333,
     v: 1600,
     l: 2,
-    n: N.n3
+    n: N.n1
 );
 
 
@@ -47,7 +47,7 @@ for (int t = 0; t < time.GetTimeModeling(); t++)
         if (freeChannel.IsActive == true)
         {
             //Проверка что время обслуживания вышло
-            if (timeComingRequest >= freeChannel.timeCommingRequest.Last() + freeChannel.timeBusy.Last())
+            if (timeComingRequest >= freeChannel.timeComingRequest.Last() + freeChannel.timeBusyChannel.Last())
             {
 
                 freeChannel.IsActive = false;
@@ -87,16 +87,16 @@ for (int t = 0; t < time.GetTimeModeling(); t++)
                             }
 
                             //Время, сколько канал в одиночку обрабатывал заявку до момента взаимопомощи
-                            double timeNewRequest = busyChannel.timeBusy.Last() - freeChannel.timeCommingRequest.Last() + freeChannel.timeBusy.Last();
+                            double timeNewRequest = busyChannel.timeBusyChannel.Last() - freeChannel.timeComingRequest.Last() + freeChannel.timeBusyChannel.Last();
 
                             //Оставшееся время обработки заявки для l каналов
                             double timeNewBusy = timeNewRequest / (serviceSystem.CountParalelChannels / countSupportChannel);
 
                             //Меняем время загруженности канала
-                            busyChannel.timeBusy[busyChannel.timeBusy.Count - 1] = timeNewRequest + timeNewBusy;
+                            busyChannel.timeBusyChannel[busyChannel.timeBusyChannel.Count - 1] = timeNewRequest + timeNewBusy;
 
-                            freeChannel.timeBusy.Add(timeNewBusy);
-                            freeChannel.timeCommingRequest.Add(timeNewRequest);
+                            freeChannel.timeBusyChannel.Add(timeNewBusy);
+                            freeChannel.timeComingRequest.Add(timeNewRequest);
 
                             break;
 
