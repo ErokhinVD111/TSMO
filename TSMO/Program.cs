@@ -11,7 +11,7 @@ ModelCharacteristics modelCharacteristics = ModelCharacteristics.GetModel
     muMid: 0.333,
     v: 1600,
     l: 2,
-    n: N.n1
+    n: N.n3
 );
 
 
@@ -33,16 +33,6 @@ double timeComingRequest = 0;
 
 //Время обслуживания заявки
 double timeBusyChannel = 0;
-
-
-//Счетчик отказов
-int requestDenied = 0;
-
-//Счетчик заявок
-int countRequest = 0;
-
-//Счетчик обслуженных заявок
-int countProccesedRequest = 0;
 
 
 //Основной цикл (генерация заявки происходит на каждой итерации)
@@ -122,7 +112,7 @@ for (int t = 0; t < time.GetTimeModeling(); t++)
 
     timeBusyChannel = time.CalculateTService();
 
-    serviceSystem.StartOfChannelProcessing(timeComingRequest, timeBusyChannel, t);
+    serviceSystem.StartOfChannelsProcessing(timeComingRequest, timeBusyChannel, t);
 
 
 }

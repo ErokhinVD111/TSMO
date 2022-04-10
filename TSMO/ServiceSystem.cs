@@ -94,11 +94,12 @@ namespace TSMO
         /// <param name="timeComingRequest"></param>
         /// <param name="timeBusyChannel"></param>
         /// <param name="indexRequest"></param>
-        public void StartOfChannelProcessing(double timeComingRequest, double timeBusyChannel, int indexRequest)
+        public void StartOfChannelsProcessing(double timeComingRequest, double timeBusyChannel, int indexRequest)
         {
             //Получаем количество свободных каналов в зависимости от условия (k>=l, k<l, k=0), где k кол-во свободных каналов
             int countFreeChannels = GetCountFreeChannels();
 
+            //Ставим заявку на обслуживание в свободные каналы
             Channels.Where(channel => !channel.IsActive).ToList().Take(countFreeChannels).
                 ToList().ForEach(channel =>
                 {
@@ -109,19 +110,6 @@ namespace TSMO
 
                 });
 
-            //for (int i = 0, j = 0; i < countFreeChannels;)
-            //{
-            //    //Если канал не занят, то принимает заявку на обслуживание
-            //    if (!Channels[j].IsActive)
-            //    {
-            //        Channels[j].IsActive = true;
-            //        Channels[j].timeBusy.Add(timeBusyChannel);
-            //        Channels[j].timeCommingRequest.Add(timeComingRequest);
-            //        Channels[j].IndexRequest = indexRequest;
-            //        i++;
-            //    }
-            //    j++;
-            //}
             if (countFreeChannels > 0)
             {
                 CountRequestComplete++;
