@@ -154,10 +154,10 @@ namespace TSMO
             Channels.Where(channel => channel.IsActive).ToList().
                 Where(channel => timeComingRequest >= channel.timeComingRequest.Last() + channel.timeBusyChannel.Last()).
                 ToList().ForEach(i => i.IsActive = false);
-            
+
             //Делаем перераспределение при условии, что оно нужно
             StartSupport(timeComingRequest);
-            
+
         }
 
 
@@ -166,7 +166,43 @@ namespace TSMO
         /// </summary>
         public void StartSupport(double timeComingRequest)
         {
+            //Поиск кол-ва каналов, которым нужна помощь
+            var channelsNeedHelp = Channels.Where(channel => channel.IsActive).ToList();
 
+            //Если каналов, которым нужна помощь меньше, чем l и больше 0, то начинаем оказывать взаимопомощь
+            if (channelsNeedHelp.Count < CountParalelChannels && channelsNeedHelp.Count > 0)
+            {
+                //выберем канал, нуждающий в помощи для взятия параметров
+                var channelNeedHelp = channelsNeedHelp.First();
+
+                double newTimeBusy = 0;
+                double timeComing = 0;
+
+                //ищем каналы, которые могут помочь и мениям их состояние и время
+                Channels.Where(channel => !channel.IsActive).ToList().
+                    Take(CountParalelChannels - channelsNeedHelp.Count).ToList().
+                    ForEach(support =>
+                    {
+                        support.IsActive = true;
+
+                        support.IndexRequest = channelNeedHelp.IndexRequest;
+
+                        //время сколько прошло с момента обработки каналами, кол-во которых меньше l
+                        timeComing = support.timeComingRequest.Last() + support.timeBusyChannel.Last();
+
+                        //время, сколько осталось обрабатывать заявку l каналами
+                        newTimeBusy = (channelNeedHelp.timeBusyChannel.Last() -
+                            support.timeComingRequest.Last() + support.timeBusyChannel.Last()) / CountParalelChannels;
+                        
+                        support.timeBusyChannel.Add(newTimeBusy);
+                        
+                        support.timeComingRequest.Add(timeComing);
+                    });
+
+                //изменяем время у каналов, кол-во которым нужна была помощь
+                channelsNeedHelp.ForEach(channel => channel.
+                                timeBusyChannel[channel.timeBusyChannel.Count() - 1] = timeComing + newTimeBusy);
+            }
         }
 
     }
