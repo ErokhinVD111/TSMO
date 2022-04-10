@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace TSMO
 {
+    //большое количетво полей (проще хранить в структуре)
+    //Нужно больше классов 
     internal class ServiceSystem
     {
         #region ChannelsCharacteristics
@@ -15,6 +17,7 @@ namespace TSMO
         /// </summary>
         public readonly int CountChannels;
 
+        public int RequestComplete;
 
         /// <summary>
         /// Число каналов, которые могут обслуживать одновременно 
@@ -37,6 +40,7 @@ namespace TSMO
             CountChannels = (int)n;
             CountParalelChannels = paralelChannels;
             Channels = new(CountChannels);
+            RequestComplete = 0;
         }
 
         public static ServiceSystem GetServiceSystem(N n, int paralelChannels)
@@ -55,10 +59,9 @@ namespace TSMO
             {
                 Channels.Add(new Channel() 
                 { 
-                    state = false, 
+                    IsActive = false, 
                     number = i + 1, 
-                    requestComplete = 0,
-                    IndexRequest = 0,
+                    IndexRequest = 0
                 });
             }
         }
@@ -73,7 +76,7 @@ namespace TSMO
             int countFreeChannel = 0;
             foreach (Channel channel in Channels)
             {
-                if (channel.state == false)
+                if (channel.IsActive == false)
                 {
                     countFreeChannel++;
                 }

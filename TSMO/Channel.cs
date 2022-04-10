@@ -8,13 +8,12 @@ namespace TSMO
 {
     internal class Channel
     {
-        public bool state;
+        public bool IsActive { get; set; }
 
-        public int number;
+        public int Number { get; set; }
 
-        public int requestComplete;
+        public int IndexRequest { get; set; }
 
-        public int IndexRequest;
 
         /// <summary>
         /// Время обслуживания заявки
@@ -25,5 +24,7 @@ namespace TSMO
         /// Время, когда заявка пришла и стала обслуживаться каналом
         /// </summary>
         public List<double> timeCommingRequest = new();
+
+       
     }
 }

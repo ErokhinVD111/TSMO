@@ -15,19 +15,19 @@ namespace TSMO
 
         #region Characteristics
 
-        public readonly double _g; //Количество пусковых установок
+        public readonly double g; //Количество пусковых установок
 
-        public readonly int _l; //Количество взаимопомогающих каналов
+        public readonly int l; //Количество взаимопомогающих каналов
 
-        public readonly double _muMid; //Скорострельность каждой пусковой установки
+        public readonly double muMid; //Скорострельность каждой пусковой установки
 
-        public readonly double _p; //Вероятность поражения цели одной установкой
+        public readonly double p; //Вероятность поражения цели одной установкой
 
-        public readonly double _v; //Скорость движения ракеты противника
+        public readonly double v; //Скорость движения ракеты противника
 
-        public readonly double _I; //Средний линейный интервал между ракетами
+        public readonly double I; //Средний линейный интервал между ракетами
 
-        public readonly double _a; //Зона обстрела
+        public readonly double a; //Зона обстрела
 
         public readonly double lambda;
 
@@ -59,25 +59,25 @@ namespace TSMO
 
         private static ModelCharacteristics modelInstance = null;
 
-        private ModelCharacteristics(double g, double muMid, double p, double v, double I, double a, int l)
+        private ModelCharacteristics(double g, double muMid, double p, double v, double I, double a, int l, N n)
         {
-            n = N.n1;
-            _g = g;
-            _muMid = muMid;
-            _p = p;
-            _v = v;
-            _I = I;
-            _a = a;
-            _l = l;
+            this.n = n;
+            this.g = g;
+            this.muMid = muMid;
+            this.p = p;
+            this.v = v;
+            this.I = I;
+            this.a = a;
+            this.l = l;
             lambda = (v / I) / 60;
             mu = g * muMid * p;
         }
 
-        public static ModelCharacteristics GetModel(double g, double muMid, double p, double v, double I, double a, int l)
+        public static ModelCharacteristics GetModel(double g, double muMid, double p, double v, double I, double a, int l, N n)
         {
             if(modelInstance == null)
             {
-                modelInstance = new ModelCharacteristics(g, muMid, p, v, I, a, l);
+                modelInstance = new ModelCharacteristics(g, muMid, p, v, I, a, l, n);
             }
             return modelInstance;
         }

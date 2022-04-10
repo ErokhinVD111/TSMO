@@ -62,12 +62,21 @@ namespace TSMO
         /// Метод для расчета времени обслуживания заявки в зависимости от количества каналов
         /// </summary>
         /// <returns></returns>
-        public double CalculateTService(int countChannel)
+        //public double CalculateTService(int countChannel)
+        //{
+        //    //double tService = 0;
+        //    //for (int i = 0; i < countChannel; i++)
+        //    //    tService += (-100 / (_l * _mu)) * Math.Log(random.NextDouble());
+        //    //return tService;
+        //    return (-100 / (_l * _mu)) * Math.Log(random.NextDouble());
+        //}
+        public double CalculateTService()
         {
-            double tService = 0;
-            for (int i = 0; i < countChannel; i++)
-                tService += (-100 / (_l * _mu)) * Math.Log(random.NextDouble());
-            return tService;
+            //double tService = 0;
+            //for (int i = 0; i < countChannel; i++)
+            //    tService += (-100 / (_l * _mu)) * Math.Log(random.NextDouble());
+            //return tService;
+            return (-100 / (_l * _mu)) * Math.Log(random.NextDouble());
         }
 
 
