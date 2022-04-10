@@ -11,7 +11,7 @@ ModelCharacteristics modelCharacteristics = ModelCharacteristics.GetModel
     muMid: 0.333,
     v: 1600,
     l: 2,
-    n: N.n3
+    n: N.n1
 );
 
 
@@ -61,8 +61,6 @@ for (int t = 0; t < time.GetTimeModeling(); t++)
             {
 
                 freeChannel.IsActive = false;
-
-                serviceSystem.RequestComplete++;
 
                 //Начинаем перераспределение при условии, что оно нужно
 
@@ -122,56 +120,10 @@ for (int t = 0; t < time.GetTimeModeling(); t++)
         }
     }
 
+    timeBusyChannel = time.CalculateTService();
 
-    //Проверям состояние каналов (есть ли среди них свободные и удовлетворяющие условию число_свободных_каналов >= l)
-    if (serviceSystem.CheckCountFreeChannels() >= serviceSystem.CountParalelChannels)
-    {
-        //Рассчитываем время обслуживания заявки
-        timeBusyChannel = time.CalculateTService();
-        for (int i = 0, j = 0; i < serviceSystem.CountParalelChannels;)
-        {
-            //Ищем свободные каналы
-            if (serviceSystem.Channels[j].IsActive == false)
-            {
-                serviceSystem.Channels[j].IsActive = true;
-                serviceSystem.Channels[j].timeBusy.Add(timeBusyChannel);
-                serviceSystem.Channels[j].timeCommingRequest.Add(timeComingRequest);
-                serviceSystem.Channels[j].IndexRequest = t;
-                i++;
-            }
-            j++;
-        }
-        countRequest++;
-        countProccesedRequest++;
+    serviceSystem.StartOfChannelProcessing(timeComingRequest, timeBusyChannel, t);
 
-    }
-    //Проверям состояние каналов (есть ли вообще свободные)
-    else if (serviceSystem.CheckCountFreeChannels() > 0)
-    {
-        //Рассчитываем время обслуживания заявки
-        timeBusyChannel = time.CalculateTService();
-        for (int i = 0, j = 0; i < serviceSystem.CheckCountFreeChannels();)
-        {
-            //Ищем свободные каналы
-            if (serviceSystem.Channels[j].IsActive == false)
-            {
-                serviceSystem.Channels[j].IsActive = true;
-                serviceSystem.Channels[j].timeBusy.Add(timeBusyChannel);
-                serviceSystem.Channels[j].timeCommingRequest.Add(timeComingRequest);
-                serviceSystem.Channels[j].IndexRequest = t;
-                i++;
-            }
-            j++;
-        }
-        countRequest++;
-        countProccesedRequest++;
-    }
-    else
-    {
-        requestDenied++;
-        countRequest++;
-
-    }
 
 }
 // served - число обслуженных заявок, amount - число поступивших заявок
@@ -187,13 +139,16 @@ for (int t = 0; t < time.GetTimeModeling(); t++)
 
 //Расчет необходимых характеристик:
 
-double k_sr = (modelCharacteristics.lambda * countProccesedRequest) / (modelCharacteristics.mu * countRequest);
+double k_sr = (modelCharacteristics.lambda * serviceSystem.CountRequestComplete) / (modelCharacteristics.mu * serviceSystem.CountRequest);
 double p_obs = modelCharacteristics.mu * k_sr / modelCharacteristics.lambda;
 double lamda_0 = p_obs * modelCharacteristics.lambda;
 double p_zk = k_sr / (int)modelCharacteristics.n;
 double t_pk = (1 / modelCharacteristics.mu) * ((1 - p_zk) / p_zk);
 
 
+Console.WriteLine($"Кол-во заявок: = {serviceSystem.CountRequest}");
+Console.WriteLine($"Кол-во обслуженных заявок = {serviceSystem.CountRequestComplete}");
+Console.WriteLine($"Кол-во необслуженных заявок = {serviceSystem.CountRequestDenied}");
 Console.WriteLine($"К среднее = {k_sr}");
 Console.WriteLine($"P обслуживания = {p_obs}");
 Console.WriteLine($"l0 = {lamda_0}");

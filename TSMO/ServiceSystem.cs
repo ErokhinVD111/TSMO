@@ -17,12 +17,31 @@ namespace TSMO
         /// </summary>
         public readonly int CountChannels;
 
-        public int RequestComplete;
 
         /// <summary>
         /// Число каналов, которые могут обслуживать одновременно 
         /// </summary>
         public readonly int CountParalelChannels;
+
+
+        /// <summary>
+        /// Число выполненных заявок
+        /// </summary>
+        public int CountRequestComplete { get; set; }
+
+
+        /// <summary>
+        /// Число заявок
+        /// </summary>
+        public int CountRequest { get; set; }
+
+
+        /// <summary>
+        /// Число отклоненных заявок
+        /// </summary>
+        public int CountRequestDenied { get; set; }
+
+
 
         #endregion
 
@@ -40,7 +59,9 @@ namespace TSMO
             CountChannels = (int)n;
             CountParalelChannels = paralelChannels;
             Channels = new(CountChannels);
-            RequestComplete = 0;
+            CountRequestComplete = 0;
+            CountRequest = 0;
+            CountRequestDenied = 0;
         }
 
         public static ServiceSystem GetServiceSystem(N n, int paralelChannels)
@@ -57,10 +78,10 @@ namespace TSMO
         {
             for (int i = 0; i < CountChannels; i++)
             {
-                Channels.Add(new Channel() 
-                { 
-                    IsActive = false, 
-                    number = i + 1, 
+                Channels.Add(new Channel()
+                {
+                    IsActive = false,
+                    Number = i + 1,
                     IndexRequest = 0
                 });
             }
@@ -68,23 +89,72 @@ namespace TSMO
 
 
         /// <summary>
-        /// Метод для проверки состояния каналов
+        /// Метод начала обработки свободными каналами пришедшей заявки
+        /// </summary>
+        /// <param name="timeComingRequest"></param>
+        /// <param name="timeBusyChannel"></param>
+        /// <param name="indexRequest"></param>
+        public void StartOfChannelProcessing(double timeComingRequest, double timeBusyChannel, int indexRequest)
+        {
+            //Получаем количество свободных каналов в зависимости от условия (k>=l, k<l, k=0), где k кол-во свободных каналов
+            int countFreeChannels = GetCountFreeChannels();
+
+            Channels.Where(channel => !channel.IsActive).ToList().Take(countFreeChannels).
+                ToList().ForEach(channel =>
+                {
+                    channel.IsActive = true;
+                    channel.IndexRequest = indexRequest;
+                    channel.timeCommingRequest.Add(timeComingRequest);
+                    channel.timeBusy.Add(timeBusyChannel);
+
+                });
+
+            //for (int i = 0, j = 0; i < countFreeChannels;)
+            //{
+            //    //Если канал не занят, то принимает заявку на обслуживание
+            //    if (!Channels[j].IsActive)
+            //    {
+            //        Channels[j].IsActive = true;
+            //        Channels[j].timeBusy.Add(timeBusyChannel);
+            //        Channels[j].timeCommingRequest.Add(timeComingRequest);
+            //        Channels[j].IndexRequest = indexRequest;
+            //        i++;
+            //    }
+            //    j++;
+            //}
+            if (countFreeChannels > 0)
+            {
+                CountRequestComplete++;
+            }
+            else
+            {
+                CountRequestDenied++;
+            }
+            CountRequest++;
+        }
+
+
+
+
+        /// <summary>
+        /// Метод для поиска свободных каналов
         /// </summary>
         /// <returns></returns>
-        public int CheckCountFreeChannels()
+        public int GetCountFreeChannels()
         {
-            int countFreeChannel = 0;
-            foreach (Channel channel in Channels)
+            if (Channels.Where(channel => !channel.IsActive).Count() >= CountParalelChannels)
             {
-                if (channel.IsActive == false)
-                {
-                    countFreeChannel++;
-                }
+                return CountParalelChannels;
             }
-            return countFreeChannel;
+            else if (Channels.Where(channel => !channel.IsActive).Count() > 0)
+            {
+                return Channels.Where(channel => !channel.IsActive).Count();
+            }
+            else
+            {
+                return 0;
+            }
         }
-        
-
 
     }
 }
