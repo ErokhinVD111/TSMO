@@ -29,7 +29,7 @@ namespace TSMO
         /// <summary>
         /// Коллекция, содержащая информацию о том, сколько каналов обслуживают одну заявку
         /// </summary>
-        private Dictionary<int, int> numOfChReqPairs;
+        private Dictionary<int, List<Channel>> reqChannelsPairs;
 
         /// <summary>
         /// Коллекция каналов, обрабатывающих заявку
@@ -60,26 +60,32 @@ namespace TSMO
         /// </summary>
         public List<int> CountBusyChPerIter { get; set; }
 
+
+        /// <summary>
+        /// Базовые характеристики системы
+        /// </summary>
+        private BaseCharacteristicsSMO baseCharacteristicsSMO;
+
+
+        /// <summary>
+        /// Счетчик времени моделирования, обслуживания и прихода заявки
+        /// </summary>
+        private TimeCalculator timeCalculator;
+
         #endregion
 
-        public ServiceSystem(NumberOfChannels numberOfChannels, int numberOfParalelChannels)
+        public ServiceSystem(BaseCharacteristicsSMO baseCharacteristicsSMO, TimeCalculator timeCalculator)
         {
-            this.numberOfChannels = (int)numberOfChannels;
-
-            this.numberOfParalelChannels = numberOfParalelChannels;
-
+            this.baseCharacteristicsSMO = baseCharacteristicsSMO;
+            this.timeCalculator = timeCalculator;
+            numberOfChannels = (int)baseCharacteristicsSMO.NumOfCh;
+            numberOfParalelChannels = baseCharacteristicsSMO.L;
             channels = new(this.numberOfChannels);
-
-            numOfChReqPairs = new();
-
+            reqChannelsPairs = new();
             SetDefaultChannels();
-
             CountBusyChPerIter = new();
-
             CountRequest = 0;
-
             CountRequestComplete = 0;
-
             CountRequestDenied = 0;
         }
 
@@ -107,35 +113,43 @@ namespace TSMO
         /// <param name="timeComingRequest">Время прихода заявки</param>
         /// <param name="timeBusyChannel">Время загруженности канала</param>
         /// <param name="indexRequest">Индекс пришедшеий заявки</param>
-        public void AddRequest(double timeComingRequest, double timeBusyChannel, int indexRequest)
+        public void AddRequest(double timeComingRequest, int indexRequest)
         {
+            //Освобождаем каналы, если время обслуживания вышло
             UpdateChannels(timeComingRequest);
+
+            //Перераспределение
+            Redistribution(timeComingRequest);
 
             //Получаем количество свободных каналов в зависимости от условия (k>=l, k<l, k=0), где k кол-во свободных каналов
             int countFreeChannels = GetCountFreeChannels();
 
+            //Число занятых каналов
+            CountBusyChPerIter.Add(GetCountBusyChannels());
+
+            //Расчитываем время загруженности канала
+            double timeBusyChannel = timeCalculator.CalculateTimeService(baseCharacteristicsSMO.Mu, countFreeChannels);
 
             //Ставим заявку на обслуживание в свободные каналы
-            channels.Where(channel => !channel.IsActive).ToList().Take(countFreeChannels).
-                ToList().ForEach(channel =>
-                {
-                    channel.IsActive = true;
-                    channel.IndexRequest = indexRequest;
-                    channel.TimeComingRequest = timeComingRequest;
-                    channel.TimeBusyChannel = timeBusyChannel;
+            var freeChannels = channels.Where(channel => !channel.IsActive).ToList().Take(countFreeChannels).ToList();
+            freeChannels.ForEach(channel =>
+            {
+                channel.IsActive = true;
+                channel.IndexRequest = indexRequest;
+                channel.TimeComingRequest = timeComingRequest;
+                channel.TimeBusyChannel = timeBusyChannel;
 
-                });
-
+            });
             if (countFreeChannels > 0)
             {
+                reqChannelsPairs.Add(freeChannels.First().IndexRequest, freeChannels);
                 CountRequestComplete++;
-
-                numOfChReqPairs.Add(indexRequest, countFreeChannels);
             }
             else
             {
                 CountRequestDenied++;
             }
+
             CountRequest++;
         }
 
@@ -186,7 +200,7 @@ namespace TSMO
                 ToList().ForEach(channel =>
                 {
                     channel.IsActive = false;
-                    numOfChReqPairs.Remove(channel.IndexRequest);
+                    reqChannelsPairs.Remove(channel.IndexRequest);
 
                 });
 
@@ -195,38 +209,74 @@ namespace TSMO
 
         }
 
-
+        /// <summary>
+        /// Метод для взаимопомощи каналам
+        /// </summary>
+        /// <param name="timeComingRequest"></param>
         private void Supporting(double timeComingRequest)
         {
             //Каналы, которым нужна помощь (проверям через индексы заявок)
-            var channelsNeedHelp = channels.Where(channel => channel.IsActive).ToList().
-                    Where(channel => numOfChReqPairs.ContainsKey(channel.IndexRequest) &&
-                    numOfChReqPairs.GetValueOrDefault(channel.IndexRequest) < numberOfParalelChannels).ToList();
-
-            //Через цикл проходимся по каналам, которым нужна помощь и добавляем в помощь свободные каналы
-            foreach (var channel in channelsNeedHelp)
+            double newTimeBusy;
+            double newTimeComing = 0.0;
+            bool isNewTime = false;
+            foreach (var channel in reqChannelsPairs.Values)
             {
-                //Каналы, обрабатывающие одну заявку в кол-ве меньше l
-                var tempBusyChannels = channelsNeedHelp.Where(ch => ch.IndexRequest == channel.IndexRequest).ToList();
-
-                //Пускаем в помощь свободные каналы и пересчитываем время
-                channels.Where(channel => !channel.IsActive).ToList().
-                    Take(numberOfParalelChannels - tempBusyChannels.Count).ToList().
-                    ForEach(supportChannel =>
+                foreach (var support in channels)
+                {
+                    if (channel.Count < numberOfChannels)
                     {
-                        supportChannel.IsActive = true;
-                        supportChannel.IndexRequest = channel.IndexRequest;
-                        supportChannel.TimeComingRequest = channel.TimeComingRequest;
-                        supportChannel.TimeBusyChannel =
-                            channel.TimeBusyChannel - (timeComingRequest - channel.TimeComingRequest + channel.TimeBusyChannel) 
-                            * (tempBusyChannels.Count / numberOfParalelChannels);
+                        if (support.IsActive == false)
+                        {
+                            support.IsActive = true;
+                            support.IndexRequest = channel.First().IndexRequest;
+
+                            newTimeComing = support.TimeComingRequest + support.TimeBusyChannel;
+                            channel.Add(support);
+                            isNewTime = true;
+                        }
+                    }
+                }
+                if (isNewTime)
+                {
+                    newTimeBusy = timeCalculator.CalculateTimeService(baseCharacteristicsSMO.Mu, channel.Count);
+                    channel.ForEach(ch =>
+                    {
+                        ch.TimeComingRequest = newTimeComing;
+                        ch.TimeBusyChannel = newTimeBusy;
                     });
-
-                tempBusyChannels.ForEach(ch => ch.TimeBusyChannel -= (timeComingRequest - ch.TimeComingRequest + ch.TimeBusyChannel)
-                            * (tempBusyChannels.Count / numberOfParalelChannels));
+                }
             }
+        }
 
+        /// <summary>
+        /// Перераспределение
+        /// </summary>
+        /// <param name="timeComingRequest"></param>
+        private void Redistribution(double timeComingRequest)
+        {
+            int countReqInSystem = reqChannelsPairs.Keys.Count;
+            if (countReqInSystem + 1 <= numberOfChannels)
+            {
+                foreach (var channel in reqChannelsPairs.Values)
+                {
+                    if (numberOfChannels - GetCountBusyChannels() == 0)
+                    {
 
+                        if (channel.Count > 1)
+                        {
+                            channel.Last().IsActive = false;
+                            channel.Remove(channel.Last());
+                            double newTimeBusy = timeCalculator.CalculateTimeService(baseCharacteristicsSMO.Mu, channel.Count);
+                            channel.ForEach(ch =>
+                            {
+                                ch.TimeComingRequest = timeComingRequest;
+                                ch.TimeBusyChannel = newTimeBusy;
+                            });
+                        }
+
+                    }
+                }
+            }
         }
 
 
